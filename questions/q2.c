@@ -10,17 +10,17 @@ const char message_bienvenue[BUFFER_SIZE] = "Bienvenue sur le shell ENSEA. \nPou
 const char prompt[PROMPT_SIZE] = "enseash % ";
 
 int main(){
-	char in_out_buf[BUFFER_SIZE];
+	char in_out_buff[BUFFER_SIZE];
 	int pid , status, bit_number;
 
 	
-	write(STDOUT_FILENO, message_bienvenue, BIENVENUE_SIZE); // Print welcoming message to terminal
+	write(STDOUT_FILENO, message_bienvenue, BUFFER_SIZE); // Print welcoming message to terminal
 	
 	while(1) {
 		write(STDOUT_FILENO, prompt, PROMPT_SIZE); // Print prompt message to terminal
 		
-		bit_number = read(STDIN_FILENO , in_out_buf,  sizeof(in_out_buf));
-		buf[bit_number-1] = 0;
+		bit_number = read(STDIN_FILENO , in_out_buff,  sizeof(in_out_buff));
+		in_out_buff[bit_number-1] = 0;
 		
 		pid = fork();
 		
@@ -32,7 +32,7 @@ int main(){
 			wait(&status); // Wait for child to finish
 			
 		} else { // This is the child process
-			execlp(buf,buf,(char*)NULL) // Execute incoming command
+			execlp(in_out_buff,in_out_buff,(char*)NULL); // Execute incoming command
 			perror("Could not execute command\n");
 			exit(EXIT_FAILURE);
 		}
