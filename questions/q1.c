@@ -7,6 +7,6 @@ const char message_bienvenue[BUFFER_SIZE] = "Bienvenue sur le shell ENSEA. \nPou
 const char prompt[PROMPT_SIZE] = "enseash % ";
 
 int main(){
-	write(STDOUT_FILENO, message_bienvenue, BIENVENUE_SIZE); //Print welcoming message
+	write(STDOUT_FILENO, message_bienvenue, BUFFER_SIZE); //Print welcoming message
 	write(STDOUT_FILENO, prompt, PROMPT_SIZE); //Print prompt message
 }
