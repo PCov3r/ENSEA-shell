@@ -13,7 +13,7 @@ const char exit_cmd[] = "exit";
 
 int main(){
 	char in_out_buff[BUFFER_SIZE];
-	int pid , status, bit_number;
+	int pid , status, nb_of_bits;
 
 	
 	write(STDOUT_FILENO, message_bienvenue, BUFFER_SIZE); // Print welcoming message to terminal
@@ -21,14 +21,14 @@ int main(){
 	while(1) {
 		write(STDOUT_FILENO, prompt, PROMPT_SIZE); // Print prompt message to terminal
 		
-		bit_number = read(STDIN_FILENO , in_out_buff,  sizeof(in_out_buff));
+		nb_of_bits = read(STDIN_FILENO , in_out_buff,  sizeof(in_out_buff));
 		
-		if(!strncmp(in_out_buff, exit_cmd, strlen(exit_cmd)) || bit_number == 0){ // Compare incoming command with "exit" and check for Ctrl+D (empty command)
+		if(!strncmp(in_out_buff, exit_cmd, strlen(exit_cmd)) || nb_of_bits == 0){ // Compare incoming command with "exit" and check for Ctrl+D (empty command)
 			write(STDOUT_FILENO, bye_message, PROMPT_SIZE);
 			exit(EXIT_SUCCESS);
 		}
 		
-		in_out_buff[bit_number-1] = 0;
+		in_out_buff[nb_of_bits-1] = 0;
 		
 		pid = fork();
 		
