@@ -37,29 +37,29 @@ int main(){
 		
 		nb_of_bits = read(STDIN_FILENO , in_buff,  sizeof(in_buff));
 		
-		if(!strncmp(in_buff, exit_cmd, strlen(exit_cmd)) || nb_of_bits == 0){ // Compare incoming command with "exit" and check for Ctrl+D (empty command)
+		in_buff[nb_of_bits-1] = 0;
+		cmd = parse_cmd(in_buff, &cmd_size);
+		
+		if(!strncmp(cmd[0], exit_cmd, strlen(cmd[0])) || nb_of_bits == 0){ // Compare incoming command with "exit" and check for Ctrl+D (empty command)
 			write(STDOUT_FILENO, bye_message, PROMPT_SIZE);
 			exit(EXIT_SUCCESS);
 		}
 		
-		in_buff[nb_of_bits-1] = 0;
-		cmd = parse_cmd(in_buff, &cmd_size);
-		
 		if (clock_gettime(CLOCK_MONOTONIC, &child_start) == -1) { //Get child process start
-               perror("clock_gettime");
+               perror("Could not acquire time");
                exit(EXIT_FAILURE);
 		}
 		
 		pid = fork();
 		
 		if(pid < 0){
-			perror("Could not fork\n");
+			perror("Could not fork");
 			exit(EXIT_FAILURE);
 		}
 		else if (pid != 0) { // This is the parent process
 			wait(&status); // Wait for child to finish
 			if (clock_gettime(CLOCK_MONOTONIC, &child_stop) == -1) { //Get child process stop
-               perror("clock_gettime");
+               perror("Could not acquire time");
                exit(EXIT_FAILURE);
 			}
 			print_exit_code(status, child_start, child_stop); // Print child exit code
@@ -67,7 +67,7 @@ int main(){
 			
 		} else { // This is the child process
 			execvp(cmd[0], cmd); // Execute incoming command
-			perror("Could not execute command\n");
+			perror("Could not execute command");
 			exit(EXIT_FAILURE);
 		}
 	}
