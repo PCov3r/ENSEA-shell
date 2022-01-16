@@ -20,7 +20,7 @@ const char exit_cmd[] = "exit";
 char child_code_buff[PROMPT_SIZE];
 
 int main(){
-	char in_out_buff[BUFFER_SIZE];
+	char in_buff[BUFFER_SIZE];
 	int pid , status, nb_of_bits;
 
 	
@@ -29,14 +29,14 @@ int main(){
 	
 	while(1) {
 		
-		nb_of_bits = read(STDIN_FILENO , in_out_buff,  sizeof(in_out_buff));
+		nb_of_bits = read(STDIN_FILENO , in_buff,  sizeof(in_buff));
 		
-		if(!strncmp(in_out_buff, exit_cmd, strlen(exit_cmd)) || nb_of_bits == 0){ // Compare incoming command with "exit" and check for Ctrl+D (empty command)
+		if(!strncmp(in_buff, exit_cmd, strlen(exit_cmd)) || nb_of_bits == 0){ // Compare incoming command with "exit" and check for Ctrl+D (empty command)
 			write(STDOUT_FILENO, bye_message, PROMPT_SIZE);
 			exit(EXIT_SUCCESS);
 		}
 		
-		in_out_buff[nb_of_bits-1] = 0;
+		in_buff[nb_of_bits-1] = 0;
 		
 		pid = fork();
 		
@@ -49,7 +49,7 @@ int main(){
 			print_exit_code(status); // Print child exit code
 			
 		} else { // This is the child process
-			execlp(in_out_buff,in_out_buff,(char*)NULL); // Execute incoming command
+			execlp(in_buff,in_buff,(char*)NULL); // Execute incoming command
 			perror("Could not execute command\n");
 			exit(EXIT_FAILURE);
 		}
