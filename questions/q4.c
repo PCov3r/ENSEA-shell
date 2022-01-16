@@ -74,11 +74,10 @@ void add_exit_code(int status){
 	
 	if (WIFEXITED(status)) { // Save exit code to temp buffer and add it to output buffer
 		sprintf(child_code_buff, "exit:%d", WEXITSTATUS(status)); 
-		strcat(output_buff, child_code_buff); 
 	}
 	else if (WIFSIGNALED(status)) { // Save signal code to temp buffer and add it to output buffer
 		sprintf(child_code_buff, "sig:%d", WTERMSIG(status));
-		strcat(output_buff, child_code_buff);
 	}
+	strcat(output_buff, child_code_buff); 
 	
 }
