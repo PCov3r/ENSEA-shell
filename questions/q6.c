@@ -37,13 +37,13 @@ int main(){
 		
 		nb_of_bits = read(STDIN_FILENO , in_buff,  sizeof(in_buff));
 		
-		in_buff[nb_of_bits-1] = 0;
-		cmd = parse_cmd(in_buff, &cmd_size);
+		if(nb_of_bits>0) in_buff[nb_of_bits-1] = 0;
 		
-		if(!strncmp(cmd[0], exit_cmd, strlen(cmd[0])) || nb_of_bits == 0){ // Compare incoming command with "exit" and check for Ctrl+D (empty command)
+		if(!strncmp(in_buff, exit_cmd, strlen(in_buff)) || nb_of_bits == 0){ // Compare incoming command with "exit" and check for Ctrl+D (empty command)
 			write(STDOUT_FILENO, bye_message, PROMPT_SIZE);
 			exit(EXIT_SUCCESS);
 		}
+		cmd = parse_cmd(in_buff, &cmd_size);
 		
 		if (clock_gettime(CLOCK_MONOTONIC, &child_start) == -1) { //Get child process start
                perror("Could not acquire time");
