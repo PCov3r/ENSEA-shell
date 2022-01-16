@@ -95,7 +95,7 @@ void print_exit_code(int status, struct timespec start, struct timespec stop){
 		sprintf(output_buff, "|%dms", (int) ((stop.tv_nsec-start.tv_nsec)/1.0e6)); 
 	}
 	
-	write(STDOUT_FILENO, output_buff, 64);
+	write(STDOUT_FILENO, output_buff, PROMPT_SIZE);
 	write(STDOUT_FILENO, prompt+8, PROMPT_SIZE); // Print last part of prompt message
 	
 }
