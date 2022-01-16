@@ -21,19 +21,14 @@ int main(){
 	
 	while((nb_of_bits = read(STDIN_FILENO , in_buff,  sizeof(in_buff))) > 0) {
 		
-		if(!strncmp(in_out_buff, exit_cmd, strlen(exit_cmd))){ // Compare incoming command with "exit"
+		if(!strncmp(in_buff, exit_cmd, strlen(exit_cmd))){ // Compare incoming command with "exit"
 			write(STDOUT_FILENO, bye_message, PROMPT_SIZE);
 			exit(EXIT_SUCCESS);
 		}
 		
-		else if(bit_number > 1){ // If there is an incoming command, and not just a '\n'
+		else if(nb_of_bits > 1){ // If there is an incoming command, and not just a '\n'
 
 			in_buff[nb_of_bits-1] = 0;
-
-			if(!strncmp(in_buff, exit_cmd, strlen(inbuff)) || nb_of_bits == 0){ // Compare incoming command with "exit" and check for Ctrl+D (empty command)
-				write(STDOUT_FILENO, bye_message, PROMPT_SIZE);
-				exit(EXIT_SUCCESS);
-			}
 
 			pid = fork(); // Create a child that will execute the command
 
