@@ -7,7 +7,7 @@
 
 /* Functions prototypes */
 
-void print_exit_code(int, struct timespec, struct timespec);
+void add_exit_code(int, struct timespec, struct timespec);
 void free_args(char**, int*);
 char** parse_cmd(char*, int*);
 
@@ -33,76 +33,82 @@ int main(){
 	write(STDOUT_FILENO, message_bienvenue, BUFFER_SIZE); // Print welcoming message to terminal
 	write(STDOUT_FILENO, prompt, PROMPT_SIZE); // Print prompt message to terminal
 	
-	while(1) {
+	while((nb_of_bits = read(STDIN_FILENO , in_buff,  sizeof(in_buff))) > 0) {
 		
-		nb_of_bits = read(STDIN_FILENO , in_buff,  sizeof(in_buff));
+		strncat(output_buff, prompt, 8); // Add first part of prompt message
 		
-		if(nb_of_bits>0) in_buff[nb_of_bits-1] = 0;
-		
-		if(!strncmp(in_buff, exit_cmd, strlen(in_buff)) || nb_of_bits == 0){ // Compare incoming command with "exit" and check for Ctrl+D (empty command)
+		if(!strncmp(in_buff, exit_cmd, strlen(exit_cmd))){ // Compare incoming command with "exit"
 			write(STDOUT_FILENO, bye_message, PROMPT_SIZE);
 			exit(EXIT_SUCCESS);
 		}
-		cmd = parse_cmd(in_buff, &cmd_size);
 		
-		if (clock_gettime(CLOCK_MONOTONIC, &child_start) == -1) { //Get child process start
-               perror("Could not acquire time");
-               exit(EXIT_FAILURE);
-		}
+		else if(nb_of_bits > 1){ // Check if there is an incoming command, and not just a '\n'
 		
-		pid = fork();
-		
-		if(pid < 0){
-			perror("Could not fork");
-			exit(EXIT_FAILURE);
-		}
-		else if (pid != 0) { // This is the parent process
-			wait(&status); // Wait for child to finish
-			if (clock_gettime(CLOCK_MONOTONIC, &child_stop) == -1) { //Get child process stop
-               perror("Could not acquire time");
+			in_buff[nb_of_bits-1] = 0;
+			cmd = parse_cmd(in_buff, &cmd_size);
+			
+			if (clock_gettime(CLOCK_MONOTONIC, &child_start) == -1) { //Get child process start
+               perror("clock_gettime");
                exit(EXIT_FAILURE);
 			}
-			print_exit_code(status, child_start, child_stop); // Print child exit code
-			free_args(cmd, &cmd_size); // Free command buffer
 			
-		} else { // This is the child process
-			execvp(cmd[0], cmd); // Execute incoming command
-			perror("Could not execute command");
-			exit(EXIT_FAILURE);
+			pid = fork(); // Fork to execute command using child
+			
+			if(pid < 0){
+				perror("Could not fork");
+				exit(EXIT_FAILURE);
+			}
+			else if (pid != 0) { // This is the parent process
+				wait(&status); // Wait for child to finish
+				if (clock_gettime(CLOCK_MONOTONIC, &child_stop) == -1) { //Get child process stop
+				   perror("clock_gettime");
+				   exit(EXIT_FAILURE);
+				}
+				add_exit_code(status, child_start, child_stop); // Print child exit code
+				free_args(cmd, &cmd_size); // Free command buffer
+				
+			} else { // This is the child process
+				execvp(cmd[0], cmd); // Execute incoming command
+				perror("Could not execute command");
+				exit(EXIT_FAILURE);
+			}
 		}
+		strcat(output_buff, prompt+8); // Add last part of prompt message
+		write(STDOUT_FILENO, output_buff, PROMPT_SIZE); // Print prompt message
+		memset(output_buff, 0, sizeof(output_buff)); // Clear buffer
+		
 	}
+	
+	write(STDOUT_FILENO, bye_message, PROMPT_SIZE); //If we get there, we received a Ctrl+D
 	exit(EXIT_SUCCESS);
 
 }
 
 /* Print command execution informations */
 
-void print_exit_code(int status, struct timespec start, struct timespec stop){
+void add_exit_code(int status, struct timespec start, struct timespec stop){
 	
-	write(STDOUT_FILENO, prompt, 8); // Print first part of prompt message
+	char exit_code_buff[PROMPT_SIZE];
 	
-	if (WIFEXITED(status)) { // Save exit code to buffer and print it
-		sprintf(output_buff, "exit:%d", WEXITSTATUS(status)); 
-		write(STDOUT_FILENO, output_buff, PROMPT_SIZE); 
+	if (WIFEXITED(status)) { // Save exit code to temp buffer and add it to output buffer
+		sprintf(exit_code_buff, "exit:%d", WEXITSTATUS(status)); 
 	}
-	else if (WIFSIGNALED(status)) { // Save signal code to buffer and print it
-		sprintf(output_buff, "sig:%d", WTERMSIG(status));
-		write(STDOUT_FILENO, output_buff, PROMPT_SIZE);
+	else if (WIFSIGNALED(status)) { // Save signal code to temp buffer and add it to output buffer
+		sprintf(exit_code_buff, "sig:%d", WTERMSIG(status));
 	}
-	memset(output_buff, 0, sizeof(output_buff)); // Clear buffer
+	strcat(output_buff, exit_code_buff);
+	
     if (stop.tv_nsec < start.tv_nsec) {
 		stop.tv_nsec += 1.0e9;
 		stop.tv_sec--;
 	}
 	
 	if((stop.tv_sec - start.tv_sec) >= 1){ //Write duration of execution in s
-		sprintf(output_buff, "|%.2fs", (stop.tv_sec - start.tv_sec)+(stop.tv_nsec-start.tv_nsec)/1.0e9); 
+		sprintf(exit_code_buff, "|%.2fs", (stop.tv_sec - start.tv_sec)+(stop.tv_nsec-start.tv_nsec)/1.0e9); 
 	} else { //Write duration of execution in ms
-		sprintf(output_buff, "|%dms", (int) ((stop.tv_nsec-start.tv_nsec)/1.0e6)); 
+		sprintf(exit_code_buff, "|%dms", (int) ((stop.tv_nsec-start.tv_nsec)/1.0e6)); 
 	}
-	
-	write(STDOUT_FILENO, output_buff, PROMPT_SIZE);
-	write(STDOUT_FILENO, prompt+8, PROMPT_SIZE); // Print last part of prompt message
+	strcat(output_buff, exit_code_buff);
 	
 }
 
@@ -156,5 +162,3 @@ void free_args(char **args, int* nbArgs){
 
 	*nbArgs = 0;
 }
-
-
