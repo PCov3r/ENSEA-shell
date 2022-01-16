@@ -41,7 +41,7 @@ int main(){
 		pid = fork();
 		
 		if(pid < 0){
-			perror("Could not fork:");
+			perror("Could not fork");
 			exit(EXIT_FAILURE);
 		}
 		else if (pid != 0) { // This is the parent process
@@ -50,7 +50,7 @@ int main(){
 			
 		} else { // This is the child process
 			execlp(in_buff,in_buff,(char*)NULL); // Execute incoming command
-			perror("Could not execute command: ");
+			perror("Could not execute command");
 			exit(EXIT_FAILURE);
 		}
 	}
