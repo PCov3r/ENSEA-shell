@@ -60,7 +60,7 @@ int main(){
 			print_exit_code(status, child_start, child_stop); // Print child exit code
 			
 		} else { // This is the child process
-			execlp(in_buff,in_buff,(char*)NULL); // Execute incoming command with arguments
+			execlp(in_buff,in_buff,(char*)NULL); // Execute incoming command
 			perror("Could not execute command\n");
 			exit(EXIT_FAILURE);
 		}
