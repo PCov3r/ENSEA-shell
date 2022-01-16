@@ -41,8 +41,8 @@ int main(){
 		}
 		
 		if (clock_gettime(CLOCK_MONOTONIC, &child_start) == -1) { //Get child process start
-               perror("Could not acquire clock");
-               exit(EXIT_FAILURE);
+		       perror("Could not acquire clock");
+		       exit(EXIT_FAILURE);
 		}
 		
 		pid = fork();
@@ -54,8 +54,8 @@ int main(){
 		else if (pid != 0) { // This is the parent process
 			wait(&status); // Wait for child to finish
 			if (clock_gettime(CLOCK_MONOTONIC, &child_stop) == -1) { //Get child process stop
-               perror("Could not acquire clock");
-               exit(EXIT_FAILURE);
+			       perror("Could not acquire clock");
+			       exit(EXIT_FAILURE);
 			}
 			print_exit_code(status, child_start, child_stop); // Print child exit code
 			
