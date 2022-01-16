@@ -6,7 +6,7 @@
 
 /* Functions prototypes */
 
-void print_exit_code(int);
+void add_exit_code(int);
 
 /* Macros and global variables */
 
@@ -17,7 +17,7 @@ char prompt[PROMPT_SIZE] = "enseash[]% ";
 const char bye_message[PROMPT_SIZE] = "\nBye bye.\n";
 const char exit_cmd[] = "exit";
 
-char child_code_buff[PROMPT_SIZE];
+char output_buff[PROMPT_SIZE];
 
 int main(){
 	char in_buff[BUFFER_SIZE];
@@ -27,50 +27,58 @@ int main(){
 	write(STDOUT_FILENO, message_bienvenue, BUFFER_SIZE); // Print welcoming message to terminal
 	write(STDOUT_FILENO, prompt, PROMPT_SIZE); // Print prompt message to terminal
 	
-	while(1) {
+	while((nb_of_bits = read(STDIN_FILENO , in_buff,  sizeof(in_buff))) > 0) {
 		
-		nb_of_bits = read(STDIN_FILENO , in_buff,  sizeof(in_buff));
+		strncat(output_buff, prompt, 8); // Add first part of prompt message
 		
-		in_buff[nb_of_bits-1] = 0;
-		
-		if(!strncmp(in_buff, exit_cmd, strlen(in_buff)) || nb_of_bits == 0){ // Compare incoming command with "exit" and check for Ctrl+D (empty command)
+		if(!strncmp(in_buff, exit_cmd, strlen(exit_cmd))){ // Compare incoming command with "exit"
 			write(STDOUT_FILENO, bye_message, PROMPT_SIZE);
 			exit(EXIT_SUCCESS);
 		}
 		
-		pid = fork();
+		else if(nb_of_bits > 1){ // Check if there is an incoming command, and not just a '\n'
 		
-		if(pid < 0){
-			perror("Could not fork");
-			exit(EXIT_FAILURE);
-		}
-		else if (pid != 0) { // This is the parent process
-			wait(&status); // Wait for child to finish
-			print_exit_code(status); // Print child exit code
+			in_buff[nb_of_bits-1] = 0;
 			
-		} else { // This is the child process
-			execlp(in_buff,in_buff,(char*)NULL); // Execute incoming command
-			perror("Could not execute command");
-			exit(EXIT_FAILURE);
+			pid = fork(); // Fork to execute command using child
+			
+			if(pid < 0){
+				perror("Could not fork");
+				exit(EXIT_FAILURE);
+			}
+			else if (pid != 0) { // This is the parent process
+				wait(&status); // Wait for child to finish
+				add_exit_code(status); // Print child exit code
+				
+			} else { // This is the child process
+				execlp(in_buff,in_buff,(char*)NULL); // Execute incoming command
+				perror("Could not execute command");
+				exit(EXIT_FAILURE);
+			}
 		}
+		strcat(output_buff, prompt+8); // Add last part of prompt message
+		write(STDOUT_FILENO, output_buff, PROMPT_SIZE); // Print prompt message
+		memset(output_buff, 0, sizeof(output_buff)); // Clear buffer
+		
 	}
+	
+	write(STDOUT_FILENO, bye_message, PROMPT_SIZE); //If we get there, we received a Ctrl+D
 	exit(EXIT_SUCCESS);
 
 }
 
 
-void print_exit_code(int status){
+void add_exit_code(int status){
 	
-	write(STDOUT_FILENO, prompt, 8); // Print first part of prompt message
+	char child_code_buff[PROMPT_SIZE];
 	
-	if (WIFEXITED(status)) { // Save exit code to buffer and print it
+	if (WIFEXITED(status)) { // Save exit code to temp buffer and add it to output buffer
 		sprintf(child_code_buff, "exit:%d", WEXITSTATUS(status)); 
-		write(STDOUT_FILENO, child_code_buff, PROMPT_SIZE); 
+		strcat(output_buff, child_code_buff); 
 	}
-	else if (WIFSIGNALED(status)) { // Save signal code to buffer and print it
+	else if (WIFSIGNALED(status)) { // Save signal code to temp buffer and add it to output buffer
 		sprintf(child_code_buff, "sig:%d", WTERMSIG(status));
-		write(STDOUT_FILENO, child_code_buff, PROMPT_SIZE);
+		strcat(output_buff, child_code_buff);
 	}
-	write(STDOUT_FILENO, prompt+8, PROMPT_SIZE); // Print last part of prompt message
 	
 }
