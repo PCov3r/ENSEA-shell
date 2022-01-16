@@ -23,12 +23,12 @@ int main(){
 		
 		nb_of_bits = read(STDIN_FILENO , in_buff,  sizeof(in_buff));
 		
-		if(!strncmp(in_buff, exit_cmd, strlen(exit_cmd)) || nb_of_bits == 0){ // Compare incoming command with "exit" and check for Ctrl+D (empty command)
+		in_buff[nb_of_bits-1] = 0;
+		
+		if(!strncmp(in_buff, exit_cmd, strlen(inbuff)) || nb_of_bits == 0){ // Compare incoming command with "exit" and check for Ctrl+D (empty command)
 			write(STDOUT_FILENO, bye_message, PROMPT_SIZE);
 			exit(EXIT_SUCCESS);
 		}
-		
-		in_buff[nb_of_bits-1] = 0;
 		
 		pid = fork();
 		
@@ -41,7 +41,7 @@ int main(){
 			
 		} else { // This is the child process
 			execlp(in_buff,in_buff,(char*)NULL); // Execute incoming command
-			perror("Could not execute command\n");
+			perror("Could not execute command :");
 			exit(EXIT_FAILURE);
 		}
 	}
